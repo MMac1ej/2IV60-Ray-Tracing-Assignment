@@ -30,18 +30,18 @@ uniform vec4 vViewPosition;
 
 // some basic transformations
 mat4 Translate(in vec3 v) {       // TODO //DONE
-        return mat4(1, 0, 0, v.x,
-                    0, 1, 0, v.y,
-                    0, 0, 1, v.z,
-                    0, 0, 0, 1);
+        return mat4(1, 0, 0, 0,
+                    0, 1, 0, 0,
+                    0, 0, 1, 0,
+                    v.x, v.y, v.z, 1);
 }
 
 mat4 RotateY(in float theta) {    // TODO //DONE
         float s = sin(radians(theta));
         float c = cos(radians(theta));
-        return mat4(c, 0, s, 0,
+        return mat4(c, 0, -s, 0,
                     0, 1, 0, 0,
-                    -s, 0, c, 0,
+                    s, 0, c, 0,
                     0, 0, 0, 1);
 }
 
