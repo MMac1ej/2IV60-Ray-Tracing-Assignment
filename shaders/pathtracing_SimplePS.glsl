@@ -32,8 +32,8 @@ uniform vec4 vViewPosition;
  // walls, the local lights and the diffuse reflections
  uniform float animSpeed;        // speed multiplier for all animations (0 = frozen)
  uniform vec3  lightColor;       // color of the ceiling area light
- uniform float lightIntensity;   // brightness multiplier of the local light sources
- uniform bool  lightSwitch;      // turns the local light sources on/off
+ uniform float lightIntensity;   // brightness multiplier of the area light
+ uniform bool  lightSwitch;      // turns the area light on/off
  uniform float sphereRoughness;  // roughness of the big bouncing sphere
  uniform float wallRoughness;    // roughness of the three walls
  uniform bool  showWalls;
@@ -96,7 +96,7 @@ struct Object {
 };
 
 
-#define NO 9         // number of objects created in animateObjects()
+#define NO 8         // number of objects created in animateObjects()
 Object objects[NO];
 
 Object makeObject(bool enabled, int type, vec3 center, vec3 size, vec3 color, float roughness, mat4 T, mat4 R, mat4 S) {
@@ -136,9 +136,8 @@ Object makeObject(bool enabled, int type, vec3 center, vec3 size, vec3 color, fl
 
 
 /* Scene: a room open towards the camera (floor + left, right and back wall) lit by
-   the sky, a white area light panel near the ceiling and a small orbiting light orb.
-   Animated: a mirror sphere bouncing on an orbit, a rotating cube and the light orb
-   circling around the cube. All animations are driven by t (fTime) * animSpeed.
+   the sky and a white area light panel near the ceiling, with a static mirror
+   sphere and a rotating cube. The animation is driven by t (fTime) * animSpeed.
 */
 void animateObjects(float t) {
     float pi = 3.1415926535897932;
@@ -156,10 +155,8 @@ void animateObjects(float t) {
         objects[0].isLight=true;
     }
     
-    {   // Shiny sphere: orbits around (-2,*,5) and bounces on the floor (floor top is at y=-2)
-        vec3 center = vec3(-2.0 - 2.5 * cos(0.5 * a),
-                           -0.5 + 2.0 * abs(sin(1.5 * a)),
-                            5.0 + 2.5 * sin(0.5 * a));
+    {   // Shiny sphere
+        vec3 center = vec3(-3, 0.0, 5.0);
         vec3 size = vec3(1.5);
         vec3 color = vec3(0.8);
         float roughness = sphereRoughness;
@@ -181,21 +178,22 @@ void animateObjects(float t) {
         objects[2].isFloor = true;
     }
 
-    // three walls, flat boxes standing on the floor edges (floor spans x in [-7,7], z in [-18,18])
-    {   // left wall (reddish)
-        vec3 center = vec3(-7.2, 4.0, 0.0);
+    // three walls, flat boxes standing ON the floor along its edges (floor spans x in [-7,7],
+    // z in [-18,18], top at y=-2), so the floor runs under the walls and does not end in view
+    {   // left wall (greenish)
+        vec3 center = vec3(-6.8, 4.0, 0.0);
         vec3 size = vec3(0.2, 6.0, 18.0);
-        vec3 color = vec3(0.85, 0.35, 0.35);
+        vec3 color = vec3(0.35, 0.85, 0.45);
         mat4 T = Translate(center);
         mat4 R = mat4(1.0);
         mat4 S = Scale(size);
         objects[3]=makeObject(showWalls, TYPE_CUBE, center, size, color, wallRoughness, T, R, S);
     }
 
-    {   // right wall (greenish)
-        vec3 center = vec3(7.2, 4.0, 0.0);
+    {   // right wall (reddish)
+        vec3 center = vec3(6.8, 4.0, 0.0);
         vec3 size = vec3(0.2, 6.0, 18.0);
-        vec3 color = vec3(0.35, 0.85, 0.45);
+        vec3 color = vec3(0.85, 0.35, 0.35);
         mat4 T = Translate(center);
         mat4 R = mat4(1.0);
         mat4 S = Scale(size);
@@ -203,8 +201,8 @@ void animateObjects(float t) {
     }
 
     {   // back wall (light grey)
-        vec3 center = vec3(0.0, 4.0, 18.2);
-        vec3 size = vec3(7.4, 6.0, 0.2);
+        vec3 center = vec3(0.0, 4.0, 17.8);
+        vec3 size = vec3(7.0, 6.0, 0.2);
         vec3 color = vec3(0.8);
         mat4 T = Translate(center);
         mat4 R = mat4(1.0);
@@ -212,9 +210,9 @@ void animateObjects(float t) {
         objects[5]=makeObject(showWalls, TYPE_CUBE, center, size, color, wallRoughness, T, R, S);
     }
 
-    {   // rotating cube standing on the floor (unit cube scaled by 1 -> side 2, bottom at y=-2)
-        vec3 center = vec3(3.0, -1.0, 3.0);
-        vec3 size = vec3(1.0);
+    {   // rotating cube standing on the floor (unit cube scaled by 1.5 -> side 3, bottom at y=-2)
+        vec3 center = vec3(3.0, -0.5, 3.0);
+        vec3 size = vec3(1.5);
         vec3 color = vec3(0.9, 0.55, 0.2);
         float roughness = 0.1;
         mat4 T = Translate(center);
@@ -223,26 +221,16 @@ void animateObjects(float t) {
         objects[6]=makeObject(true, TYPE_CUBE, center, size, color, roughness, T, R, S);
     }
 
-    {   // area light: thin bright panel near the ceiling, modeled like the sky (isLight)
+    {   // area light: thin bright strip near the ceiling, running in depth (along z),
+        // modeled like the sky (isLight)
         vec3 center = vec3(0.0, 8.0, 4.0);
-        vec3 size = vec3(2.5, 0.05, 2.5);
+        vec3 size = vec3(1.0, 0.05, 6.0);
         vec3 color = lightColor * lightIntensity;
         mat4 T = Translate(center);
         mat4 R = mat4(1.0);
         mat4 S = Scale(size);
         objects[7]=makeObject(lightSwitch, TYPE_CUBE, center, size, color, 1.0, T, R, S);
         objects[7].isLight = true;
-    }
-
-    {   // small warm light orb circling around the cube
-        vec3 center = vec3(3.0 + 2.2 * cos(2.0 * a), 1.0 + 0.5 * sin(3.0 * a), 3.0 + 2.2 * sin(2.0 * a));
-        vec3 size = vec3(0.3);
-        vec3 color = vec3(1.0, 0.6, 0.2) * lightIntensity;
-        mat4 T = Translate(center);
-        mat4 R = mat4(1.0);
-        mat4 S = Scale(size);
-        objects[8]=makeObject(lightSwitch, TYPE_SPHERE, center, size, color, 1.0, T, R, S);
-        objects[8].isLight = true;
     }
 }
 
