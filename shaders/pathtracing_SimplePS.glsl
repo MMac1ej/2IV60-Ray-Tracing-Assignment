@@ -34,7 +34,7 @@ uniform vec4 vViewPosition;
  uniform vec3  lightColor;       // color of the ceiling area light
  uniform float lightIntensity;   // brightness multiplier of the area light
  uniform bool  lightSwitch;      // turns the area light on/off
- uniform float sphereRoughness;  // roughness of the big bouncing sphere
+ uniform float sphereRoughness;  // roughness of the mirror sphere
  uniform float wallRoughness;    // roughness of the three walls
  uniform bool  showWalls;
  uniform float diffuseChance;    // probability [0,1] that a bounce is diffuse instead of specular
